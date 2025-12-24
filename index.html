@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MumMate — honest support for everyday motherhood</title>
+  <meta name="description" content="MumMate is a mobile-first support space for first-time and young mums: honest answers, emotional check-ins, AI reassurance chat, and visual guides based on real-life mum experiences." />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root{ color-scheme: light; }
+    /* Subtle app-like feel */
+    .glass { background: rgba(255,255,255,.72); backdrop-filter: blur(10px); }
+    .shadow-soft { box-shadow: 0 10px 30px rgba(2,6,23,.10); }
+    .ring-soft { box-shadow: 0 0 0 6px rgba(59,130,246,.10); }
+    .no-scrollbar::-webkit-scrollbar{ display:none; }
+    .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+    /* Safe-area padding for iOS */
+    .safe-b { padding-bottom: env(safe-area-inset-bottom); }
+    .safe-t { padding-top: env(safe-area-inset-top); }
+
+    /* Chat bubble subtle animation */
+    @keyframes popIn{ from{ transform: translateY(6px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
+    .pop { animation: popIn .18s ease-out; }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .pop{ animation:none; }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-rose-50 to-sky-50 text-slate-900">
+  <div id="app" class="min-h-dvh flex flex-col">
+    <!-- Top bar -->
+    <header class="safe-t sticky top-0 z-30">
+      <div class="mx-auto max-w-md px-4 pt-3 pb-3">
+        <div class="glass shadow-soft rounded-2xl border border-white/60 px-4 py-3 flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-rose-400 to-sky-400 flex items-center justify-center text-white font-semibold">MM</div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h1 class="font-semibold leading-tight">MumMate</h1>
+              <button id="btnSOS" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10">Need help now</button>
+            </div>
+            <p class="text-xs text-slate-600">Honest, non-judgmental support for everyday motherhood</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 mx-auto max-w-md w-full px-4 pb-24">
+      <!-- Quick check-in -->
+      <section class="mt-3">
+        <div class="rounded-2xl border border-white/70 bg-white/70 shadow-soft p-4">
+          <div class="flex items-start gap-3">
+            <div class="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+              <span class="text-lg" aria-hidden="true">❤</span>
+            </div>
+            <div class="flex-1">
+              <h2 class="font-semibold">Quick check‑in</h2>
+              <p class="text-sm text-slate-600">No right answers. This is just for you.</p>
+              <div class="mt-3 grid grid-cols-5 gap-2" role="group" aria-label="How are you feeling right now?">
+                <button data-mood="Overwhelmed" class="moodBtn rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-rose-200">😵‍💫<div class="mt-1 text-[10px] text-slate-600">Over</div></button>
+                <button data-mood="Anxious" class="moodBtn rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-rose-200">😟<div class="mt-1 text-[10px] text-slate-600">Anx</div></button>
+                <button data-mood="Tired" class="moodBtn rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-rose-200">🥱<div class="mt-1 text-[10px] text-slate-600">Tired</div></button>
+                <button data-mood="Okay" class="moodBtn rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-rose-200">🙂<div class="mt-1 text-[10px] text-slate-600">Okay</div></button>
+                <button data-mood="Proud" class="moodBtn rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-rose-200">🥹<div class="mt-1 text-[10px] text-slate-600">Proud</div></button>
+              </div>
+              <div id="checkinResult" class="mt-3 hidden">
+                <div class="rounded-xl bg-slate-900 text-white p-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <p id="checkinText" class="text-sm"></p>
+                    <button id="btnAddToChat" class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-white/10">Send to chat</button>
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button id="btnGrounding" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-300">1‑minute grounding</button>
+                    <button id="btnTinyPlan" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-300">Make a tiny plan</button>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 text-[11px] text-slate-500 leading-snug">If you’re worried about your safety or your baby’s safety, call local emergency services. This app is not medical advice.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs content -->
+      <section class="mt-4">
+        <!-- Chat -->
+        <div id="view-chat" class="view">
+          <div class="rounded-2xl border border-white/70 bg-white/70 shadow-soft overflow-hidden">
+            <div class="px-4 py-3 border-b border-white/60 flex items-center justify-between gap-3">
+              <div>
+                <h2 class="font-semibold">AI reassurance chat</h2>
+                <p class="text-sm text-slate-600">Warm, honest, non‑judgmental. You’re not a bad mum.</p>
+              </div>
+              <button id="btnResetChat" class="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200">Reset</button>
+            </div>
+
+            <div id="chatScroll" class="h-[44vh] overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
+              <!-- Messages injected -->
+            </div>
+
+            <div class="px-4 pb-4">
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <button class="quickPrompt text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10" data-prompt="My baby won’t stop crying and I feel like I’m failing.">Crying & guilt</button>
+                <button class="quickPrompt text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" data-prompt="I’m scared I’m doing feeding wrong. Can you reassure me?"><span class="text-slate-900">Feeding worry</span></button>
+                <button class="quickPrompt text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" data-prompt="I snapped at my partner. I feel awful."><span class="text-slate-900">Relationship stress</span></button>
+                <button class="quickPrompt text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" data-prompt="Can you give me a 10-minute reset plan while my baby naps?"><span class="text-slate-900">10‑min reset</span></button>
+              </div>
+
+              <form id="chatForm" class="flex items-end gap-2" autocomplete="off">
+                <div class="flex-1">
+                  <label for="chatInput" class="sr-only">Message</label>
+                  <textarea id="chatInput" rows="1" placeholder="Ask anything… (e.g., ‘Is it normal to…’)" class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-sky-200"></textarea>
+                  <div class="mt-1 flex items-center justify-between">
+                    <p id="typingHint" class="text-[11px] text-slate-500">Try: ‘I feel…’ or ‘I’m worried that…’</p>
+                    <p id="charCount" class="text-[11px] text-slate-500">0/500</p>
+                  </div>
+                </div>
+                <button type="submit" class="shrink-0 h-12 px-4 rounded-2xl bg-sky-600 text-white font-semibold hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Answers -->
+        <div id="view-answers" class="view hidden">
+          <div class="rounded-2xl border border-white/70 bg-white/70 shadow-soft overflow-hidden">
+            <div class="px-4 py-3 border-b border-white/60">
+              <h2 class="font-semibold">Everyday questions (honest answers)</h2>
+              <p class="text-sm text-slate-600">Built from real-life mum experiences — practical, not perfect.</p>
+              <div class="mt-3 flex gap-2">
+                <input id="searchQ" type="search" placeholder="Search: sleep, feeding, poop, crying…" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-sky-200" />
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2" id="chips"></div>
+            </div>
+            <div id="qList" class="px-4 py-4 space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Guides -->
+        <div id="view-guides" class="view hidden">
+          <div class="rounded-2xl border border-white/70 bg-white/70 shadow-soft overflow-hidden">
+            <div class="px-4 py-3 border-b border-white/60">
+              <h2 class="font-semibold">Visual guides</h2>
+              <p class="text-sm text-slate-600">Step‑by‑step mini guides — simple and forgiving.</p>
+            </div>
+            <div id="guideGrid" class="px-4 py-4 grid grid-cols-1 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- Community -->
+        <div id="view-community" class="view hidden">
+          <div class="rounded-2xl border border-white/70 bg-white/70 shadow-soft overflow-hidden">
+            <div class="px-4 py-3 border-b border-white/60">
+              <h2 class="font-semibold">Real mum moments</h2>
+              <p class="text-sm text-slate-600">Anonymous snippets. You’re not alone.</p>
+            </div>
+            <div class="px-4 py-4 space-y-3" id="moments"></div>
+            <div class="px-4 pb-4">
+              <button id="btnNewMoment" class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10">Show another moment</button>
+              <p class="mt-2 text-[11px] text-slate-500">These are curated examples — not a substitute for professional care.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modals -->
+      <div id="modalBackdrop" class="fixed inset-0 bg-slate-900/40 hidden items-end justify-center z-50">
+        <div class="w-full max-w-md rounded-t-3xl bg-white safe-b shadow-soft border border-white/70">
+          <div class="p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="modalTitle" class="font-semibold text-lg">Title</h3>
+                <p id="modalSub" class="text-sm text-slate-600">Subtitle</p>
+              </div>
+              <button id="modalClose" class="h-10 w-10 rounded-xl border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" aria-label="Close">✕</button>
+            </div>
+            <div id="modalBody" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom nav -->
+    <nav class="safe-b fixed bottom-0 left-0 right-0 z-40">
+      <div class="mx-auto max-w-md px-4 pb-3">
+        <div class="glass shadow-soft rounded-2xl border border-white/60 grid grid-cols-4 overflow-hidden">
+          <button class="tabBtn px-3 py-3 text-xs font-semibold flex flex-col items-center gap-1" data-tab="chat">
+            <span class="text-lg" aria-hidden="true">💬</span>
+            <span>Chat</span>
+          </button>
+          <button class="tabBtn px-3 py-3 text-xs font-semibold flex flex-col items-center gap-1 text-slate-600" data-tab="answers">
+            <span class="text-lg" aria-hidden="true">✅</span>
+            <span>Answers</span>
+          </button>
+          <button class="tabBtn px-3 py-3 text-xs font-semibold flex flex-col items-center gap-1 text-slate-600" data-tab="guides">
+            <span class="text-lg" aria-hidden="true">🧭</span>
+            <span>Guides</span>
+          </button>
+          <button class="tabBtn px-3 py-3 text-xs font-semibold flex flex-col items-center gap-1 text-slate-600" data-tab="community">
+            <span class="text-lg" aria-hidden="true">🫶</span>
+            <span>Moments</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Data
+    // -----------------------------
+    const QUESTION_BANK = [
+      {
+        id: 'crying-normal',
+        tags: ['Crying','Newborn','Overwhelm'],
+        q: "My baby cries a lot. Is this normal?",
+        a: [
+          "Yes — many babies cry a lot, especially in the late afternoon/evening. It doesn’t mean you’re doing it wrong.",
+          "Try a ‘basic needs sweep’: feed, burp, nappy, temperature, cuddles/skin-to-skin, a change of scene, white noise or rhythmic movement.",
+          "If you feel yourself spiralling: place baby somewhere safe (cot/Moses basket), take 60 seconds, breathe, then return. That’s good parenting.",
+          "Seek medical advice urgently if your baby is hard to wake, has a fever, trouble breathing, persistent vomiting, or you feel something is ‘not right’."
+        ],
+        realTip: "Real mum tip: ‘When I felt panicky, I put on the extractor fan or a white-noise track and bounced on the spot. It didn’t fix everything, but it gave my brain a rail to hold.’"
+      },
+      {
+        id: 'feeding-enough',
+        tags: ['Feeding','Bottle','Breastfeeding'],
+        q: "How do I know my baby is getting enough milk?",
+        a: [
+          "You’re not expected to ‘just know’. Look for patterns, not perfection.",
+          "Common signs of enough: regular wet nappies, some dirty nappies (varies by age), alert periods, and steady weight gain over time.",
+          "If you’re breastfeeding: swallowing sounds, relaxed hands after feeding, and your breasts feeling softer can help (but aren’t perfect indicators).",
+          "If you’re worried, a feeding assessment or weight check can be incredibly reassuring — asking for that is responsible, not needy."
+        ],
+        realTip: "Real mum tip: ‘I kept a 24-hour note on my phone (feeds + nappies). It stopped me arguing with my anxious brain.’"
+      },
+      {
+        id: 'sleep-wont-lie-down',
+        tags: ['Sleep','Newborn','Contact naps'],
+        q: "My baby won’t sleep unless held. Am I creating bad habits?",
+        a: [
+          "No. Wanting closeness is developmentally normal — especially for newborns.",
+          "You’re not ‘spoiling’ a baby. You’re helping them feel safe while their nervous system matures.",
+          "If you want to practice transfers: warm the sleep space, wait for floppy arms, then lower bum first, then shoulders, then head. Keep a hand on their chest for 30–60 seconds.",
+          "If you’re exhausted, it’s okay to ask for shifts: a friend/partner holding baby while you nap can be a game-changer."
+        ],
+        realTip: "Real mum tip: ‘I stopped fighting contact naps and used them as my “sit down and hydrate” time.’"
+      },
+      {
+        id: 'postpartum-emotions',
+        tags: ['Emotions','Postpartum','Anxiety'],
+        q: "Is it normal to feel sad or anxious after having a baby?",
+        a: [
+          "Very common. Hormones, sleep loss, and huge life change can hit hard — even if you love your baby.",
+          "If feelings are intense, last more than two weeks, or you’re having scary thoughts, you deserve support — this is treatable.",
+          "You don’t need to ‘earn’ help by getting worse. Talk to a health professional, a trusted person, or a postpartum support line.",
+          "If you’re in immediate danger or fear you might harm yourself or your baby, seek urgent emergency help right now."
+        ],
+        realTip: "Real mum tip: ‘I told my midwife “I’m not okay” and it was the first time I exhaled in weeks.’"
+      },
+      {
+        id: 'baby-poop',
+        tags: ['Poop','Newborn','Health'],
+        q: "What’s ‘normal’ baby poop?",
+        a: [
+          "Annoyingly: a lot is normal. Colour, frequency, and texture change with age and feeding.",
+          "Typical: mustardy/yellow seedy poop (often breastfed), more tan/brown (often formula), sometimes green (can be normal).",
+          "Red flags: white/grey (chalky), black after the first days, lots of blood, signs of dehydration, or your baby seems very unwell."
+        ],
+        realTip: "Real mum tip: ‘I googled less and took photos to show the nurse. It was faster and kinder to my brain.’"
+      },
+      {
+        id: 'partner-resentment',
+        tags: ['Relationships','Mental load','Communication'],
+        q: "I resent my partner. Is that normal?",
+        a: [
+          "It’s common — especially when you’re depleted and carrying the mental load.",
+          "Resentment often means ‘I need support and rest’, not ‘I’m a bad person’.",
+          "Try a simple script: ‘I’m maxed out. Can you take X for the next 48 hours so I can reset?’ Be specific.",
+          "If you feel unsafe in your relationship, seek help from local services."
+        ],
+        realTip: "Real mum tip: ‘We made a “default jobs” list (bottles, bins, bedtime). It reduced arguments by 80%.’"
+      }
+    ];
+
+    const GUIDE_BANK = [
+      {
+        id: 'guide-calm-crying',
+        title: 'Calm a crying baby (a kind checklist)',
+        time: '5–15 min',
+        level: 'Gentle',
+        steps: [
+          { icon: '🧷', title: 'Basics first', text: 'Nappy, hunger, temperature, burp, hair tourniquet check (toes/fingers).' },
+          { icon: '🤱', title: 'Connection', text: 'Cuddle, skin‑to‑skin, steady rocking, slow voice. Your calm tone helps.' },
+          { icon: '🌬️', title: 'Rhythm & sound', text: 'White noise, shushing, walking, stroller loop, gentle bouncing.' },
+          { icon: '🌙', title: 'Sleep cues', text: 'Dim lights, reduce stimulation, try a transfer when baby is drowsy.' },
+          { icon: '🧠', title: 'If you’re overwhelmed', text: 'Put baby in a safe place. Take 60 seconds. Get help. This is allowed.' }
+        ],
+        mumNotes: [
+          "‘Sometimes the win was just getting through the next 10 minutes.’",
+          "‘Earplugs helped me stay calm while I soothed.’"
+        ]
+      },
+      {
+        id: 'guide-transfer',
+        title: 'Cot transfer that doesn’t ruin your life (maybe)',
+        time: '2–8 min',
+        level: 'Practical',
+        steps: [
+          { icon: '🔥', title: 'Warm the space', text: 'Warm sheet with your hand (no hot water bottle left in cot). Make it cosy.' },
+          { icon: '⏳', title: 'Wait for floppy', text: 'Look for heavy limbs, slower breathing. Not every nap needs a transfer.' },
+          { icon: '⬇️', title: 'Bum → shoulders → head', text: 'Lower in stages. Keep your body close to reduce the ‘drop’ feeling.' },
+          { icon: '✋', title: 'Hold & hum', text: 'Hand on chest/belly for 30–60 seconds. Gentle hum/white noise.' },
+          { icon: '🧩', title: 'If it fails', text: 'You didn’t fail. Try again later or choose a contact nap and reset.' }
+        ],
+        mumNotes: [
+          "‘I stopped doing transfers when I was already near tears.’",
+          "‘I practiced once a day — not every nap.’"
+        ]
+      },
+      {
+        id: 'guide-10min-reset',
+        title: '10‑minute mum reset (during a nap)',
+        time: '10 min',
+        level: 'Restorative',
+        steps: [
+          { icon: '💧', title: 'Hydrate', text: 'Drink water. Yes, now. Dehydration feels like anxiety.' },
+          { icon: '🍌', title: 'Eat something easy', text: 'Anything counts: banana, toast, yogurt, leftovers.' },
+          { icon: '🧺', title: 'One tiny task', text: 'Pick ONE: wash bottles, start laundry, clear a surface. Stop at 10 min.' },
+          { icon: '🪟', title: 'Light + air', text: 'Open a window or step outside for 60 seconds.' },
+          { icon: '🫶', title: 'Kind thought', text: 'Say: “I’m learning. My baby is safe. I’m allowed to need help.”' }
+        ],
+        mumNotes: [
+          "‘I set a timer so I didn’t accidentally clean for the whole nap.’",
+          "‘Food first made everything easier.’"
+        ]
+      }
+    ];
+
+    const MOMENTS = [
+      { title: 'I cried in the bathroom', text: 'I put my baby down safely and cried for 3 minutes. Then I washed my face and tried again. That was the day I realized “trying again” is parenting.' },
+      { title: 'The “perfect routine” myth', text: 'My friends’ babies slept in perfect blocks. Mine didn’t. We were still okay. I stopped comparing and my shoulders dropped for the first time.' },
+      { title: 'Feeding guilt', text: 'I combo-fed and felt judged… mostly by myself. My baby grew, smiled, and that was the proof I needed.' },
+      { title: 'I miss my old life', text: 'I love my baby and I miss my freedom. Both are true. Saying it out loud made it less scary.' },
+      { title: 'The first time I asked for help', text: 'I texted a friend: “Can you bring lunch and hold the baby while I shower?” She said yes immediately. I wish I asked sooner.' }
+    ];
+
+    // -----------------------------
+    // Utilities
+    // -----------------------------
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function escapeHtml(str){
+      return str
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function nowHHMM(){
+      const d = new Date();
+      return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+
+    function save(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+    function load(key, fallback){
+      try{ const v = JSON.parse(localStorage.getItem(key));
+        return (v === null || v === undefined) ? fallback : v;
+      } catch { return fallback; }
+    }
+
+    // -----------------------------
+    // Tabs
+    // -----------------------------
+    const tabBtns = $$('.tabBtn');
+    const views = {
+      chat: $('#view-chat'),
+      answers: $('#view-answers'),
+      guides: $('#view-guides'),
+      community: $('#view-community')
+    };
+
+    function setTab(tab){
+      for (const [k, el] of Object.entries(views)) el.classList.toggle('hidden', k !== tab);
+      tabBtns.forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.classList.toggle('text-slate-600', !active);
+        btn.classList.toggle('text-slate-900', active);
+        btn.classList.toggle('bg-white/40', active);
+      });
+      save('mm_tab', tab);
+    }
+
+    tabBtns.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+    // -----------------------------
+    // Modal
+    // -----------------------------
+    const modalBackdrop = $('#modalBackdrop');
+    const modalTitle = $('#modalTitle');
+    const modalSub = $('#modalSub');
+    const modalBody = $('#modalBody');
+
+    function openModal({title, sub, bodyHtml}){
+      modalTitle.textContent = title || '';
+      modalSub.textContent = sub || '';
+      modalBody.innerHTML = bodyHtml || '';
+      modalBackdrop.classList.remove('hidden');
+      modalBackdrop.classList.add('flex');
+    }
+
+    function closeModal(){
+      modalBackdrop.classList.add('hidden');
+      modalBackdrop.classList.remove('flex');
+    }
+
+    $('#modalClose').addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+    // -----------------------------
+    // SOS (safety)
+    // -----------------------------
+    $('#btnSOS').addEventListener('click', () => {
+      openModal({
+        title: 'Need help now',
+        sub: 'If you or your baby might be unsafe, get urgent help.',
+        bodyHtml: `
+          <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+              <p class="text-sm text-slate-700"><strong>Emergency:</strong> Call your local emergency number now.</p>
+              <p class="mt-2 text-sm text-slate-700"><strong>Feeling unsafe or having scary thoughts?</strong> You deserve immediate support. Reach out to a trusted person and a professional helpline in your country.</p>
+              <p class="mt-2 text-xs text-slate-500">This prototype can’t place calls or diagnose. It’s support and information only.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-200 p-4">
+              <p class="text-sm font-semibold">Quick “I need help” message</p>
+              <p class="text-sm text-slate-600 mt-1">Copy/paste to someone you trust:</p>
+              <textarea class="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm" rows="3" readonly>I’m not feeling okay and I need support. Can you call me / come over / stay on the phone with me for a bit?</textarea>
+            </div>
+          </div>
+        `
+      });
+    });
+
+    // -----------------------------
+    // Check-in
+    // -----------------------------
+    const checkinResult = $('#checkinResult');
+    const checkinText = $('#checkinText');
+    let lastCheckinMessage = '';
+
+    const CHECKIN_LINES = {
+      Overwhelmed: [
+        "You’re carrying a lot. If all you do today is keep everyone safe and fed, that counts.",
+        "Let’s make this smaller: what’s the next 5 minutes, not the next week?"
+      ],
+      Anxious: [
+        "Anxiety loves ‘what if’. You don’t have to solve every possible outcome right now.",
+        "You can be a good mum and still feel scared. Those can exist together."
+      ],
+      Tired: [
+        "Sleep deprivation is brutal. You’re not weak — your body is asking for rest.",
+        "If you can, trade perfection for recovery: one nap, one shower, one snack."
+      ],
+      Okay: [
+        "Okay is a real mood. Not every day has to be magical.",
+        "Want to use this steadier moment to set up future-you? One small kind thing."
+      ],
+      Proud: [
+        "Hold onto that. Pride is allowed — you’re learning something new every day.",
+        "What did you do today that you want to remember? It can be tiny."
+      ]
+    };
+
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    $$('.moodBtn').forEach(btn => btn.addEventListener('click', () => {
+      const mood = btn.dataset.mood;
+      const msg = `${pick(CHECKIN_LINES[mood])} (Check‑in: ${mood.toLowerCase()} at ${nowHHMM()})`;
+      lastCheckinMessage = msg;
+      checkinText.textContent = msg;
+      checkinResult.classList.remove('hidden');
+      checkinResult.scrollIntoView({behavior:'smooth', block:'nearest'});
+      save('mm_last_mood', { mood, at: Date.now(), msg });
+    }));
+
+    $('#btnAddToChat').addEventListener('click', () => {
+      setTab('chat');
+      addUserMessage(lastCheckinMessage || 'I just did a quick check-in and I need support.');
+      addAssistantMessage(generateAssistantReply(lastCheckinMessage || 'check-in'));
+    });
+
+    $('#btnGrounding').addEventListener('click', () => {
+      openModal({
+        title: '1‑minute grounding',
+        sub: 'A fast nervous-system reset you can do anywhere.',
+        bodyHtml: `
+          <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+              <p class="text-sm text-slate-700"><strong>60 seconds:</strong> breathe out longer than you breathe in.</p>
+              <ol class="mt-2 list-decimal ml-5 text-sm text-slate-700 space-y-1">
+                <li>Inhale through your nose for 4.</li>
+                <li>Exhale slowly for 6–8 (like fogging a mirror).</li>
+                <li>Repeat 4 times.</li>
+              </ol>
+              <p class="mt-2 text-sm text-slate-700">Add a hand on your chest: your body understands warmth.</p>
+            </div>
+            <button id="startTimer" class="w-full px-4 py-3 rounded-2xl bg-sky-600 text-white font-semibold hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200">Start 60s timer</button>
+            <div id="timerBox" class="hidden rounded-2xl border border-slate-200 p-4">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-semibold">Timer</p>
+                <p id="timerText" class="text-sm text-slate-600">60s</p>
+              </div>
+              <div class="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div id="timerBar" class="h-2 bg-rose-500 w-0"></div>
+              </div>
+              <p class="mt-2 text-xs text-slate-500">If baby is crying: it’s okay to do this while holding them or while they’re safe in the cot.</p>
+            </div>
+          </div>
+        `
+      });
+
+      let running = false;
+      let t = 60;
+      let interval;
+      const startBtn = $('#startTimer');
+      const timerBox = $('#timerBox');
+      const timerText = $('#timerText');
+      const timerBar = $('#timerBar');
+
+      startBtn?.addEventListener('click', () => {
+        if (running) return;
+        running = true;
+        timerBox.classList.remove('hidden');
+        t = 60;
+        timerText.textContent = `${t}s`;
+        timerBar.style.width = '0%';
+        const start = Date.now();
+        interval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - start)/1000);
+          const left = Math.max(0, 60 - elapsed);
+          timerText.textContent = `${left}s`;
+          timerBar.style.width = `${Math.min(100, (elapsed/60)*100)}%`;
+          if (left <= 0){
+            clearInterval(interval);
+            running = false;
+            timerText.textContent = 'Done';
+            timerBar.style.width = '100%';
+          }
+        }, 200);
+      });
+
+    });
+
+    $('#btnTinyPlan').addEventListener('click', () => {
+      openModal({
+        title: 'Make a tiny plan',
+        sub: 'One thing for you, one thing for baby, one thing for the home (optional).',
+        bodyHtml: `
+          <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200 p-4">
+              <label class="text-xs font-semibold text-slate-700">For me (2 minutes)</label>
+              <input id="planMe" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Drink water / shower / text a friend…" />
+              <label class="mt-3 text-xs font-semibold text-slate-700 block">For baby (next feed/nap)</label>
+              <input id="planBaby" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Feed, burp, nappy, cuddle…" />
+              <label class="mt-3 text-xs font-semibold text-slate-700 block">For the house (optional)</label>
+              <input id="planHome" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Start laundry / wash 3 bottles / none" />
+              <button id="savePlan" class="mt-4 w-full px-4 py-3 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10">Save plan</button>
+              <p id="planSaved" class="mt-2 text-sm text-slate-600 hidden">Saved. Tiny plans count.</p>
+            </div>
+          </div>
+        `
+      });
+
+      const planMe = $('#planMe');
+      const planBaby = $('#planBaby');
+      const planHome = $('#planHome');
+      const saved = load('mm_tiny_plan', {me:'', baby:'', home:''});
+      if (planMe) planMe.value = saved.me || '';
+      if (planBaby) planBaby.value = saved.baby || '';
+      if (planHome) planHome.value = saved.home || '';
+
+      $('#savePlan')?.addEventListener('click', () => {
+        save('mm_tiny_plan', { me: planMe.value.trim(), baby: planBaby.value.trim(), home: planHome.value.trim(), at: Date.now() });
+        $('#planSaved').classList.remove('hidden');
+      });
+    });
+
+    // -----------------------------
+    // Chat
+    // -----------------------------
+    const chatScroll = $('#chatScroll');
+
+    function renderMessage({role, text, ts}){
+      const isUser = role === 'user';
+      const wrap = document.createElement('div');
+      wrap.className = `pop flex ${isUser ? 'justify-end' : 'justify-start'}`;
+      wrap.innerHTML = `
+        <div class="max-w-[88%] rounded-2xl px-4 py-3 ${isUser ? 'bg-sky-600 text-white' : 'bg-white border border-slate-200 text-slate-900'}">
+          <div class="text-sm leading-relaxed">${escapeHtml(text).replaceAll('\n','<br>')}</div>
+          <div class="mt-2 text-[10px] ${isUser ? 'text-white/80' : 'text-slate-500'}">${escapeHtml(ts || nowHHMM())}</div>
+        </div>
+      `;
+      chatScroll.appendChild(wrap);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+
+    function addUserMessage(text){
+      const msg = { role: 'user', text, ts: nowHHMM() };
+      const history = load('mm_chat', []);
+      history.push(msg);
+      save('mm_chat', history);
+      renderMessage(msg);
+    }
+
+    function addAssistantMessage(text){
+      const msg = { role: 'assistant', text, ts: nowHHMM() };
+      const history = load('mm_chat', []);
+      history.push(msg);
+      save('mm_chat', history);
+      renderMessage(msg);
+    }
+
+    function generateAssistantReply(userText){
+      const t = (userText || '').toLowerCase();
+      const safety = /(hurt myself|harm myself|suicid|kill myself|hurt the baby|harm the baby|shake|abuse)/i.test(userText || '');
+      if (safety){
+        return [
+          "I’m really glad you said that out loud. You deserve immediate, real-world support.",
+          "If you or your baby might be unsafe, please call your local emergency number now, or contact a crisis/mental health line in your country.",
+          "If you can: put baby somewhere safe (cot) and ask someone to stay with you on the phone or come over.",
+          "You’re not alone — and this is treatable."
+        ].join('\n');
+      }
+
+      // Pattern-based empathy + practical options
+      const empathy = [
+        "You’re not doing motherhood ‘wrong’ — you’re doing something hard with a nervous system that’s tired.",
+        "I’m with you. We can take this one small step at a time.",
+        "No judgement here. If this feels messy, that’s because it is sometimes."
+      ];
+
+      const normalize = [
+        "Lots of mums worry they’re failing — the worry usually means you care deeply.",
+        "It can be normal to feel love and frustration at the same time.",
+        "If today is survival mode, that’s still parenting."
+      ];
+
+      const suggestions = [];
+
+      if (t.includes('cry') || t.includes('crying') || t.includes('scream')){
+        suggestions.push(
+          "If baby is crying right now: try a quick sweep — feed, burp, nappy, temperature, then add rhythm (white noise + steady movement).",
+          "If you feel your fuse shortening: it’s okay to place baby somewhere safe and take 60 seconds. That’s a safety skill."
+        );
+      }
+      if (t.includes('feed') || t.includes('milk') || t.includes('breast') || t.includes('bottle')){
+        suggestions.push(
+          "Feeding worry is so common. Helpful signs are wet nappies and weight trend over time — not one single feed.",
+          "Would you like tips for breastfeeding, bottle, or combo feeding?"
+        );
+      }
+      if (t.includes('sleep') || t.includes('nap') || t.includes('won\'t sleep')){
+        suggestions.push(
+          "If sleep is the issue: contact naps are normal, especially early on. You’re not creating ‘bad habits’.",
+          "If you want, I can walk you through a gentle cot transfer step-by-step."
+        );
+      }
+      if (t.includes('partner') || t.includes('resent') || t.includes('argument') || t.includes('snapped')){
+        suggestions.push(
+          "Relationship strain after baby is extremely common, especially with sleep loss and mental load.",
+          "A small script you can try: ‘I’m maxed out. Can you take [specific task] for the next 48 hours so I can reset?’"
+        );
+      }
+      if (t.includes('anx') || t.includes('panic') || t.includes('worried') || t.includes('scared')){
+        suggestions.push(
+          "For anxiety: let’s separate ‘possible’ from ‘probable’. What’s the single specific thing you’re worried about right now?",
+          "Try 4-in / 6-out breathing for 60 seconds. Want me to start a quick grounding plan?"
+        );
+      }
+      if (t.includes('alone') || t.includes('no help')){
+        suggestions.push(
+          "Doing this without support is heavy. You deserve a team.",
+          "Who’s one person you could message with a specific ask (food, 30-minute baby hold, laundry drop-off)?"
+        );
+      }
+
+      if (suggestions.length === 0){
+        suggestions.push(
+          "Tell me what’s happening in the last hour (baby + you). I’ll help you make a tiny next-step plan.",
+          "If you want, choose one: reassurance, practical steps, or both."
+        );
+      }
+
+      return [pick(empathy), pick(normalize), '', ...suggestions, '', "If this is about your or baby’s health and you’re unsure, it’s always okay to get a professional check — that’s good care."].join('\n');
+    }
+
+    function seedChatIfEmpty(){
+      const history = load('mm_chat', []);
+      chatScroll.innerHTML = '';
+      if (!history.length){
+        const welcome = {
+          role: 'assistant',
+          ts: nowHHMM(),
+          text: "Hi. I’m MumMate — here for honest, non‑judgmental support.\n\nYou can ask everyday questions (sleep, feeding, crying, recovery), or just say how you’re feeling.\n\nWhat’s going on right now?"
+        };
+        save('mm_chat', [welcome]);
+      }
+      load('mm_chat', []).forEach(renderMessage);
+    }
+
+    $('#btnResetChat').addEventListener('click', () => {
+      save('mm_chat', []);
+      seedChatIfEmpty();
+    });
+
+    const chatInput = $('#chatInput');
+    const charCount = $('#charCount');
+
+    function autosize(el){
+      el.style.height = 'auto';
+      el.style.height = Math.min(140, el.scrollHeight) + 'px';
+    }
+
+    chatInput.addEventListener('input', () => {
+      const n = chatInput.value.length;
+      charCount.textContent = `${n}/500`;
+      if (n > 500) chatInput.value = chatInput.value.slice(0, 500);
+      autosize(chatInput);
+    });
+
+    $('#chatForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      addUserMessage(text);
+      chatInput.value = '';
+      charCount.textContent = '0/500';
+      autosize(chatInput);
+
+      // Simulated typing delay
+      const typing = document.createElement('div');
+      typing.className = 'pop flex justify-start';
+      typing.innerHTML = `
+        <div class="max-w-[88%] rounded-2xl px-4 py-3 bg-white border border-slate-200">
+          <div class="text-sm text-slate-600">Typing…</div>
+        </div>`;
+      chatScroll.appendChild(typing);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+
+      setTimeout(() => {
+        typing.remove();
+        addAssistantMessage(generateAssistantReply(text));
+      }, 450);
+    });
+
+    $$('.quickPrompt').forEach(btn => btn.addEventListener('click', () => {
+      const p = btn.dataset.prompt;
+      addUserMessage(p);
+      addAssistantMessage(generateAssistantReply(p));
+    }));
+
+    // -----------------------------
+    // Answers (search + chips + accordion)
+    // -----------------------------
+    const chipsEl = $('#chips');
+    const searchQ = $('#searchQ');
+    const qList = $('#qList');
+
+    function uniqueTags(){
+      const set = new Set();
+      QUESTION_BANK.forEach(x => x.tags.forEach(t => set.add(t)));
+      return Array.from(set).sort((a,b)=>a.localeCompare(b));
+    }
+
+    let activeTag = load('mm_active_tag', 'All');
+
+    function renderChips(){
+      const tags = ['All', ...uniqueTags()];
+      chipsEl.innerHTML = tags.map(t => {
+        const active = t === activeTag;
+        return `<button class="chip text-xs font-semibold px-3 py-1.5 rounded-full border ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'} focus:outline-none focus:ring-4 focus:ring-sky-200" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`;
+      }).join('');
+      $$('.chip', chipsEl).forEach(btn => btn.addEventListener('click', () => {
+        activeTag = btn.dataset.tag;
+        save('mm_active_tag', activeTag);
+        renderChips();
+        renderQuestions();
+      }));
+    }
+
+    function renderQuestions(){
+      const term = (searchQ.value || '').trim().toLowerCase();
+      const filtered = QUESTION_BANK.filter(item => {
+        const matchesTag = activeTag === 'All' || item.tags.includes(activeTag);
+        const blob = (item.q + ' ' + item.a.join(' ') + ' ' + item.tags.join(' ') + ' ' + item.realTip).toLowerCase();
+        const matchesTerm = !term || blob.includes(term);
+        return matchesTag && matchesTerm;
+      });
+
+      if (!filtered.length){
+        qList.innerHTML = `
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-sm text-slate-700 font-semibold">No matches</p>
+            <p class="text-sm text-slate-600 mt-1">Try a different word (e.g., “sleep”, “crying”, “poop”).</p>
+          </div>
+        `;
+        return;
+      }
+
+      qList.innerHTML = filtered.map(item => {
+        const tags = item.tags.map(t => `<span class="text-[11px] px-2 py-1 rounded-full bg-slate-100 text-slate-700">${escapeHtml(t)}</span>`).join(' ');
+        const answer = item.a.map(p => `<li class="ml-5 list-disc text-sm text-slate-700">${escapeHtml(p)}</li>`).join('');
+        return `
+          <details class="group rounded-2xl border border-slate-200 bg-white p-4">
+            <summary class="cursor-pointer list-none">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="font-semibold text-slate-900">${escapeHtml(item.q)}</p>
+                  <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
+                </div>
+                <div class="shrink-0 h-9 w-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 group-open:rotate-180 transition">⌄</div>
+              </div>
+            </summary>
+            <div class="mt-3">
+              <div class="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <ul class="space-y-2">${answer}</ul>
+              </div>
+              <div class="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
+                <p class="text-xs font-semibold text-rose-800">Real mum experience</p>
+                <p class="mt-1 text-sm text-rose-900">${escapeHtml(item.realTip)}</p>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <button class="askInChat text-xs font-semibold px-3 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200" data-question="${escapeHtml(item.q)}">Ask in chat</button>
+                <button class="saveItem text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" data-id="${escapeHtml(item.id)}">Save</button>
+              </div>
+            </div>
+          </details>
+        `;
+      }).join('');
+
+      $$('.askInChat', qList).forEach(btn => btn.addEventListener('click', () => {
+        const q = btn.dataset.question;
+        setTab('chat');
+        addUserMessage(q);
+        addAssistantMessage(generateAssistantReply(q));
+      }));
+
+      $$('.saveItem', qList).forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const saved = new Set(load('mm_saved', []));
+        if (saved.has(id)) saved.delete(id); else saved.add(id);
+        save('mm_saved', Array.from(saved));
+        btn.textContent = saved.has(id) ? 'Saved ✓' : 'Save';
+      }));
+
+      // Initialize saved button state
+      const saved = new Set(load('mm_saved', []));
+      $$('.saveItem', qList).forEach(btn => {
+        const id = btn.dataset.id;
+        btn.textContent = saved.has(id) ? 'Saved ✓' : 'Save';
+      });
+    }
+
+    searchQ.addEventListener('input', () => renderQuestions());
+
+    // -----------------------------
+    // Guides
+    // -----------------------------
+    const guideGrid = $('#guideGrid');
+
+    function renderGuides(){
+      guideGrid.innerHTML = GUIDE_BANK.map(g => {
+        return `
+          <button class="text-left rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200" data-guide="${escapeHtml(g.id)}">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="font-semibold">${escapeHtml(g.title)}</p>
+                <p class="mt-1 text-sm text-slate-600">${escapeHtml(g.time)} • ${escapeHtml(g.level)}</p>
+              </div>
+              <div class="h-10 w-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700">🧾</div>
+            </div>
+            <div class="mt-3 grid grid-cols-5 gap-2">${g.steps.slice(0,5).map(s => `<div class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs">${escapeHtml(s.icon)}<div class="mt-1 text-[10px] text-slate-600">${escapeHtml(s.title.split(' ')[0])}</div></div>`).join('')}</div>
+          </button>
+        `;
+      }).join('');
+
+      $$('#guideGrid button').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.dataset.guide;
+        const g = GUIDE_BANK.find(x => x.id === id);
+        if (!g) return;
+        openModal({
+          title: g.title,
+          sub: `${g.time} • ${g.level} • based on real mum strategies`,
+          bodyHtml: `
+            <div class="space-y-3">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <ol class="space-y-3">
+                  ${g.steps.map((s,i)=>`
+                    <li class="flex gap-3">
+                      <div class="h-10 w-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center">${escapeHtml(s.icon)}</div>
+                      <div>
+                        <p class="text-sm font-semibold">${i+1}. ${escapeHtml(s.title)}</p>
+                        <p class="text-sm text-slate-700 mt-0.5">${escapeHtml(s.text)}</p>
+                      </div>
+                    </li>
+                  `).join('')}
+                </ol>
+              </div>
+              <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                <p class="text-xs font-semibold text-rose-800">Real mum notes</p>
+                <ul class="mt-2 space-y-2">
+                  ${g.mumNotes.map(n => `<li class="text-sm text-rose-900">• ${escapeHtml(n)}</li>`).join('')}
+                </ul>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="guideToChat" class="px-4 py-3 rounded-2xl bg-sky-600 text-white font-semibold hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200">Talk it through</button>
+                <button id="guideSave" class="px-4 py-3 rounded-2xl bg-white border border-slate-200 font-semibold hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200">Save guide</button>
+              </div>
+            </div>
+          `
+        });
+
+        $('#guideToChat')?.addEventListener('click', () => {
+          closeModal();
+          setTab('chat');
+          addUserMessage(`Can you help me use this guide: “${g.title}”? What should I do first?`);
+          addAssistantMessage(generateAssistantReply(`help with ${g.title}`));
+        });
+
+        $('#guideSave')?.addEventListener('click', () => {
+          const saved = new Set(load('mm_saved_guides', []));
+          saved.add(g.id);
+          save('mm_saved_guides', Array.from(saved));
+          $('#guideSave').textContent = 'Saved ✓';
+        });
+      }));
+    }
+
+    // -----------------------------
+    // Community moments
+    // -----------------------------
+    const momentsEl = $('#moments');
+
+    function renderMoment(){
+      const m = MOMENTS[Math.floor(Math.random()*MOMENTS.length)];
+      const card = document.createElement('div');
+      card.className = 'pop rounded-2xl border border-slate-200 bg-white p-4';
+      card.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">🫧</div>
+          <div>
+            <p class="font-semibold">${escapeHtml(m.title)}</p>
+            <p class="mt-1 text-sm text-slate-700 leading-relaxed">${escapeHtml(m.text)}</p>
+            <div class="mt-3 flex gap-2">
+              <button class="momentToChat text-xs font-semibold px-3 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200">Reply in chat</button>
+              <button class="momentAffirm text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-200">I feel seen</button>
+            </div>
+          </div>
+        </div>
+      `;
+      momentsEl.prepend(card);
+
+      $('.momentToChat', card).addEventListener('click', () => {
+        setTab('chat');
+        addUserMessage(`I read this and it hit me: “${m.title}”. I’m feeling…`);
+        addAssistantMessage(generateAssistantReply(`I feel ${m.title}`));
+      });
+
+      $('.momentAffirm', card).addEventListener('click', () => {
+        card.classList.add('ring-soft');
+        setTimeout(() => card.classList.remove('ring-soft'), 800);
+      });
+    }
+
+    $('#btnNewMoment').addEventListener('click', renderMoment);
+
+    // -----------------------------
+    // Boot
+    // -----------------------------
+    function boot(){
+      setTab(load('mm_tab', 'chat'));
+      seedChatIfEmpty();
+      renderChips();
+      renderQuestions();
+      renderGuides();
+      // Seed 2 moments
+      momentsEl.innerHTML = '';
+      renderMoment();
+      renderMoment();
+
+      const last = load('mm_last_mood', null);
+      if (last?.msg){
+        checkinText.textContent = last.msg;
+        lastCheckinMessage = last.msg;
+        checkinResult.classList.remove('hidden');
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
